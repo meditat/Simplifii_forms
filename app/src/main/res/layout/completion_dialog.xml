@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:padding="16dp"
+    android:background="@drawable/bg_dialog"
+    android:layout_height="match_parent">
+
+
+    <ImageButton
+        android:id="@+id/done_img"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_centerHorizontal="true"
+        android:background="@drawable/tick_bg"
+        android:src="@drawable/ic_done_black_24dp"
+        android:tint="#FFF" />
+
+    <TextView
+        android:id="@+id/thanks"
+        android:layout_marginTop="8dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/done_img"
+        android:layout_centerHorizontal="true"
+        android:gravity="center"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        android:text="Thank You" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/thanks"
+        android:layout_centerHorizontal="true"
+        android:gravity="center"
+        android:text="Form Submitted Successfully"
+        android:textSize="16sp" />
+
+</RelativeLayout>
