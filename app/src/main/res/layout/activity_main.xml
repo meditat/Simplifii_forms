@@ -7,9 +7,10 @@
     tools:context=".MainActivity">
 
 
+
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
-        android:elevation="5dp"
+        android:elevation="18dp"
         android:layout_height="156dp">
 
         <TextView
@@ -30,6 +31,33 @@
             android:orientation="vertical"
             android:id="@+id/my_layout"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content">
+
+            <RelativeLayout
+                android:orientation="vertical"
+                android:id="@+id/progress_layout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <ProgressBar
+                    android:id="@+id/progree"
+                    android:layout_width="40dp"
+                    android:layout_marginBottom="8dp"
+                    android:layout_height="40dp"
+                    android:layout_centerInParent="true"
+                    android:layout_gravity="center"/>
+
+                <TextView
+                    android:layout_marginTop="16dp"
+                    android:layout_width="wrap_content"
+                    android:padding="4dp"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/progree"
+                    android:layout_centerHorizontal="true"
+                    android:text="Fetching API..."
+                    android:textColor="#fFF"
+                    android:background="#5E5C5C"/>
+            </RelativeLayout>
+        </LinearLayout>
     </ScrollView>
 </LinearLayout>

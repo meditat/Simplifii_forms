@@ -1,5 +1,6 @@
 package com.example.simplifiiform;
 
+import android.annotation.TargetApi;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Color;
@@ -9,6 +10,7 @@ import android.os.AsyncTask;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.Html;
@@ -50,18 +52,23 @@ import java.util.Objects;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import static android.view.View.GONE;
+import static android.view.View.TEXT_ALIGNMENT_CENTER;
+
 public class MainActivity extends AppCompatActivity {
 
     private static String TAG = "Something";
     static String data = "";
     static List<Model> models;
     LinearLayout linearLayout;
+    ArrayList<View> views;
 
     int TITLE_ID = 6;
     int MIN_ID = 7;
     int MAX_ID = 8;
     int SEEK_ID = 9;
 
+    RelativeLayout progressLayout;
     TextInputEditText editText;
     SignSeekBar signSeekBar;
 
@@ -69,10 +76,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        progressLayout = findViewById(R.id.progress_layout);
         models = new ArrayList<>();
         linearLayout = findViewById(R.id.my_layout);
         FetchData fetchData = new FetchData(this, linearLayout);
         fetchData.execute();
+        views = new ArrayList<>();
+        disableAutoFill();
     }
 
 
@@ -89,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected Void doInBackground(Void... voids) {
             try {
-                URL apiUrl = new URL("https://api.myjson.com/bins/135kt4");
+                URL apiUrl = new URL("https://ca.platform.simplifii.xyz/api/v1/static/assignment2");
                 HttpsURLConnection connection = (HttpsURLConnection) apiUrl.openConnection();
                 InputStream inputStream = connection.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -155,6 +165,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
+            progressLayout.setVisibility(GONE);
+
             if (!models.isEmpty()) {
                 for (int i = 0; i < models.size(); i++) {
                     final Model model = models.get(i);
@@ -176,10 +188,12 @@ public class MainActivity extends AppCompatActivity {
         private void makeButton(final Model model) {
             Button button = new Button(context);
             button.setText(model.getLabel());
-            button.setPadding(16, 0, 16, 0);
+            button.setPadding(8, 8, 8, 8);
             linearLayout.setPadding(16, 0, 16, 0);
             LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             button.setLayoutParams(buttonParams);
+            button.setBackgroundColor(getResources().getColor(R.color.colorPrimaryDark));
+            button.setTextColor(Color.WHITE);
 
             linearLayout.addView(button);
 
@@ -188,8 +202,8 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     if (editText.getText().toString().isEmpty()) {
-                        Log.d(TAG, "onClick: Somethting bad");
-                        Snackbar snackbar = Snackbar.make(linearLayout,  Html.fromHtml("<font color=\"#FFFFFF\">Fields can't be empty</font>"), Snackbar.LENGTH_LONG)
+                        Log.d(TAG, "onClick: Something bad");
+                        Snackbar snackbar = Snackbar.make(linearLayout, Html.fromHtml("<font color=\"#FFFFFF\">Fields can't be empty</font>"), Snackbar.LENGTH_LONG)
                                 .setAction("Action", null);
                         View sbView = snackbar.getView();
                         sbView.setBackgroundColor(ContextCompat.getColor(context, R.color.colorPrimaryDark));
@@ -207,24 +221,24 @@ public class MainActivity extends AppCompatActivity {
                 AsyncHttpClient client = new AsyncHttpClient();
                 // Http Request Params Object
                 RequestParams params = new RequestParams();
-                for(int i = 0;i<models.size();i++){
 
+                int i =0;
+                for (View items : views){
                     Model model1 = models.get(i);
-                    if (model1.getType().equals("range")){
-                        params.put(model1.getLabel(), String.valueOf(signSeekBar.getProgress()));
-
-                    }if (model1.getType().equals("input")){
-                        params.put(model1.getLabel(), editText.getText().toString());
+                    if (items instanceof EditText){
+                        params.put(model1.getLabel(), ((EditText)items).getText().toString());
                     }
+                    if (items instanceof SignSeekBar){
+                        params.put(model1.getLabel(), String.valueOf(((SignSeekBar)items).getProgress()));
+                    }
+                    i++;
                 }
-
 
                 client.post(model.getApiUri(), params, new AsyncHttpResponseHandler() {
                     @Override
                     public void onSuccess(String response) {
                         showDialog();
                         Log.i("Response", "Response SP Status. " + response);
-
                     }
 
                     @Override
@@ -251,29 +265,52 @@ public class MainActivity extends AppCompatActivity {
 
             textInputLayout.setLayoutParams(textInputLayoutParams);
             textInputLayout.addView(editText, editTextParams);
-            textInputLayout.setHint(model.getLabel());
+            if (model.getValidationName().equals("required")) {
+                textInputLayout.setHint(model.getLabel() + "*");
+            } else {
+                textInputLayout.setHint(model.getLabel() + "*");
 
-
+            }
             editTextParams.setMargins(16, 16, 16, 16);
             linearLayout.addView(textInputLayout);
 
-            editText.addTextChangedListener(new TextWatcher() {
+            editText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                 @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                }
-
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    if (!isValidEmail(s)) {
-                        editText.setError(model.getValidationMsg());
+                public void onFocusChange(View v, boolean hasFocus) {
+                    if (!hasFocus) {
+                        if (model.getValidationName().equals("required") && editText.getText().toString().isEmpty() || !isValidEmail(editText.getText().toString())) {
+                            editText.setError(model.getValidationMsg());
+                        }
                     }
                 }
-
-                @Override
-                public void afterTextChanged(Editable s) {
-
-                }
             });
+
+            views.add(editText);
+
+            for (final View items : views) {
+                if (items instanceof EditText) {
+                    if (!items.hasFocus()) {
+                        ((EditText) items).addTextChangedListener(new TextWatcher() {
+                            @Override
+                            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                            }
+
+                            @Override
+                            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                                if ((model.getValidationName().equals("required") && ((EditText)items).getText().toString().isEmpty()) || !isValidEmail(((EditText)items).getText().toString())) {
+                                    ((EditText)items).setError(model.getValidationMsg());
+                                }
+                            }
+
+                            @Override
+                            public void afterTextChanged(Editable s) {
+
+                            }
+                        });
+                    }
+                }
+            }
+
         }
 
 
@@ -304,14 +341,15 @@ public class MainActivity extends AppCompatActivity {
             signSeekBar.getConfigBuilder()
                     .min(model.getMin())
                     .max(model.getMax())
-                    .sectionCount(1)
+                    .sectionCount(model.getInterval())
                     .sectionTextSize(16)
-                    .thumbTextSize(12)
-                    .showSectionText()
-                    .showThumbText()
+                    .thumbTextSize(18)
                     .signTextSize(18)
-                    .sectionTextPosition(SignSeekBar.TextPosition.SIDES)
+                    .showThumbText()
+                    .autoAdjustSectionMark()
+                    .sectionTextPosition(SignSeekBar.TextPosition.BELOW_SECTION_MARK)
                     .build();
+
             signSeekBar.setLayoutParams(seekBar);
             signSeekBar.setPadding(16, 0, 16, 0);
             signSeekBar.setId(SEEK_ID);
@@ -321,6 +359,7 @@ public class MainActivity extends AppCompatActivity {
             relativeLayout.addView(signSeekBar);
 
             linearLayout.addView(relativeLayout);
+            views.add(signSeekBar);
 
 
         }
@@ -343,6 +382,11 @@ public class MainActivity extends AppCompatActivity {
             dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
             dialog.show();
         }
+    }
+
+    @TargetApi(Build.VERSION_CODES.O)
+    private void disableAutoFill() {
+        getWindow().getDecorView().setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS);
     }
 }
 
